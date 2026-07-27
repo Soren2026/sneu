@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Soren – Personal Website</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <button id="toggle-dark">Toggle Dark Mode</button>
+
+  <header>
+    <img src="assets/portrait.png" alt="Soren portrait">
+    <h1 id="name"></h1>
+    <p id="title"></p>
+  </header>
+
+  <section>
+    <h2>About Me</h2>
+    <p id="bio"></p>
+
+    <h2>Interests</h2>
+    <ul id="interests"></ul>
+
+    <h2>Projects</h2>
+    <div id="projects"></div>
+
+    <h2>Special Announcement</h2>
+    <div id="announcement-box"></div>
+
+    <h2>Audio Waveform Visualizer</h2>
+    <audio id="audio" controls src="assets/audio-sample.mp3"></audio>
+    <canvas id="waveform"></canvas>
+
+    <h2>Blog</h2>
+    <div id="blog"></div>
+
+    <h2>Contact Me</h2>
+    <form action="https://formspree.io/f/your-form-id" method="POST">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+  </section>
+
+  <script>
+    // Load profile data
+    fetch("data.json")
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("name").textContent = data.name;
+        document.getElementById("title").textContent = data.title;
+        document.getElementById("bio").textContent = data.bio;
+        document.getElementById("announcement-box").textContent = data.announcement;
+
+        const interestsList = document.getElementById("interests");
+        data.interests.forEach(i => {
+          const li = document.createElement("li");
+          li.textContent = i;
+          interestsList.appendChild(li);
+        });
+
+        const projectsDiv = document.getElementById("projects");
+        data.projects.forEach(p => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `<h3>${p.name}</h3><p>${p.description}</p>`;
+          projectsDiv.appendChild(card);
+        });
+      });
+
+    // Load blog posts
+    fetch("blog.json")
+      .then(r => r.json())
+      .then(posts => {
+        const blogDiv = document.getElementById("blog");
+        posts.forEach(post => {
+          const div = document.createElement("div");
+          div.className = "blog-post";
+          div.innerHTML = `<h3>${post.title}</h3><small>${post.date}</small><p>${post.content}</p>`;
+          blogDiv.appendChild(div);
+        });
+      });
+
+    // Dark mode toggle
+    document.getElementById("toggle-dark").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+    });
+
+    // Audio waveform visualizer
+    const audio = document.getElementById("audio");
+    const canvas = document.getElementById("waveform");
+    const ctx = canvas.getContext("2d");
+    const audioCtx = new AudioContext();
+    const src = audioCtx.createMediaElementSource(audio);
+    const analyser = audioCtx.createAnalyser();
+    src.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    function draw() {
+      requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--card-bg");
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const barWidth = (canvas.width / bufferLength) * 2.5;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = dataArray[i] / 2;
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--accent");
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+    }
+    draw();
+  </script>
+</body>
+</html>

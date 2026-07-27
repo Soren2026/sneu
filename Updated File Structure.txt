@@ -1,0 +1,6 @@
+index.html
+style.css
+data.json
+blog.json
+assets/portrait.png
+assets/audio-sample.mp3
